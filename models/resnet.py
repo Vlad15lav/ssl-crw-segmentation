@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 
 class BasicBlock(nn.Module):
+    """
+    Using block repeater for ResNet18 and ResNet34
+    """
     def __init__(self, in_channels, planes, stride=1,
                 downsample=None, groups=1, base_width=64,
                 dilation=1, norm_layer=None):
@@ -22,18 +25,23 @@ class BasicBlock(nn.Module):
         self.downsample = downsample
 
     def forward(self, x):
+        # save for skip connection
         identity = x
-
+        
+        # F(x) layers
         out = self.Residual(x)
 
         if self.downsample is not None:
             identity = self.downsample(x)
-
-        out += identity
+        
+        # add skip connecion
         out = self.relu(out)
         return out
 
 class Bottleneck(nn.Module):
+    """
+    Using block repeater for ResNet50, ResNet101, ResNet152
+    """
     def __init__(self, in_channels, planes, stride=1,
                 downsample=None, groups=1, base_width=64,
                 dilation=1, norm_layer=None):
@@ -58,13 +66,16 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
 
     def forward(self, x):
+        # save for skip connection
         identity = x
-
+        
+        # F(x) layers
         out = self.Residual(x)
 
         if self.downsample is not None:
             identity = self.downsample(x)
-
+        
+        # add skip connecion
         out += identity
         out = self.relu(out)
         return out
