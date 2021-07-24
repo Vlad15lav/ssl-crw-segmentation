@@ -11,7 +11,7 @@ class Bottleneck(nn.Module):
         
         up_channel = int(planes * (base_width / 64.0)) * groups
         
-        self.FModule = nn.Sequential(
+        self.Residual = nn.Sequential(
             nn.Conv2d(in_channels, up_channel, kernel_size=1, stride=stride, bias=False),
             nn.BatchNorm2d(up_channel),
             nn.ReLU(),
@@ -26,13 +26,13 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
 
     def forward(self, x):
-        x_before = x
+        identity = x
 
-        out = self.FModule(x)
+        out = self.Residual(x)
 
         if self.downsample is not None:
-            x_before = self.downsample(x)
+            identity = self.downsample(x)
 
-        out += x_before
+        out += identity
         out = self.relu(out)
         return out
