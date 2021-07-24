@@ -1,6 +1,38 @@
 import torch
 import torch.nn as nn
 
+class BasicBlock(nn.Module):
+    def __init__(self, in_channels, planes, stride=1,
+                downsample=None, groups=1, base_width=64,
+                dilation=1, norm_layer=None):
+        
+        super(BasicBlock, self).__init__()
+        self.stride = stride
+                
+        self.Residual = nn.Sequential(
+            nn.Conv2d(in_channels, planes, kernel_size=3, stride=1,
+                               padding=1, groups=1, bias=False, dilation=1),
+            nn.BatchNorm2d(planes),
+            nn.ReLU(),
+            nn.Conv2d(planes, planes, kernel_size=3, stride=1,
+                               padding=1, groups=1, bias=False, dilation=1),
+            nn.BatchNorm2d(planes))
+        
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+
+    def forward(self, x):
+        identity = x
+
+        out = self.Residual(x)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+        return out
+
 class Bottleneck(nn.Module):
     def __init__(self, in_channels, planes, stride=1,
                 downsample=None, groups=1, base_width=64,
