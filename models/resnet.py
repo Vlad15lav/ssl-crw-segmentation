@@ -158,3 +158,6 @@ class ResNet(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
+
+def resnet50():
+    return ResNet(Bottleneck, [3, 4, 6, 3])
