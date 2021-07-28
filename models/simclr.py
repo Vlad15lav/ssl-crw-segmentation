@@ -7,7 +7,6 @@ class SimCLR(nn.Module):
         self.out_filter_gap = self.feature_network.fc.in_features
         del self.feature_network.fc
 
-
         self.project_head = nn.Sequential(
             nn.Linear(self.out_filter_gap, self.out_filter_gap),
             nn.ReLU(),
