@@ -1,3 +1,4 @@
+import random
 import torch
 
 from PIL import Image, ImageFilter
@@ -18,7 +19,6 @@ class CUB200(Dataset):
             img_files.append(self.path + '/images/' + img_paths[i][1])
         
         self.img_files = img_files
-
         self.transform = transform
 
     def __len__(self):
