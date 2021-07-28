@@ -16,7 +16,7 @@ from models.resnet import resnet50
 from models.rotnet import RotNet
 from data.dataloaders import CUB200
 
-from tools.utils import get_sheduler, adjust_learning_rate
+from tools.utils import get_scheduler, adjust_learning_rate
 
 def get_args():
     parser = argparse.ArgumentParser('Training RotNet for CUB200 - Vlad15lav')
