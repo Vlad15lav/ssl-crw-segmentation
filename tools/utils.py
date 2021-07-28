@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-def get_sheduler(lr, final_lr, batches, epoches, warmup_epochs=10, warmup_lr=1e-5):
+def get_scheduler(lr, final_lr, batches, epoches, warmup_epochs=10, warmup_lr=1e-5):
 	warmup_lr_schedule = np.linspace(warmup_lr, lr, batches * warmup_epochs)
 	iters = np.arange(batches * (epoches - warmup_epochs))
 	cosine_lr_schedule = np.array([final_lr + 0.5 * (lr - final_lr) *
