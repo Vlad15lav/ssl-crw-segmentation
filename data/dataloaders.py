@@ -5,20 +5,24 @@ from PIL import Image, ImageFilter
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-class CUB200(Dataset):
-	"""
-	Dataset class for RotNet
-	"""
-    def __init__(self, path, transform=None):
+class CUB200(torch.utils.data.Dataset):
+    def __init__(self, path, transform=None, mode=None):
         self.path = path
+        self.mode = mode
+        # images paths
         with open(f'{path}/images.txt', 'r') as f:
             img_paths = [x.split() for x in f.read().splitlines()]
-
-        img_files = []
+        # labels
+        with open(f'{path}/image_class_labels.txt', 'r') as f:
+            img_labels = [int(x.split()[-1]) for x in f.read().splitlines()]
+        
+        img_files, all_targets = [], []
         for i in range(len(img_paths)):
             img_files.append(self.path + '/images/' + img_paths[i][1])
+            all_targets.append(img_labels[i][1] - 1)
         
         self.img_files = img_files
+        self.all_targets = all_targets
         self.transform = transform
 
     def __len__(self):
@@ -30,9 +34,12 @@ class CUB200(Dataset):
         if self.transform is not None:
             img = self.transform(img)
         
-        label = random.randint(0, 3)
-
-        img = transforms.functional.rotate(img, 90 * label)
+        if self.mode == 'RotNet':
+            label = random.randint(0, 3)
+            img = transforms.functional.rotate(img, 90 * label)
+        else:
+            label = self.img_labels[i]
+        
         label = torch.FloatTensor([label])
         
         return img, label, self.img_files[index]
