@@ -38,7 +38,7 @@ class CUB200(Dataset):
             label = random.randint(0, 3)
             img = transforms.functional.rotate(img, 90 * label)
         else:
-            label = self.img_labels[i]
+            label = self.all_targets[index]
         
         label = torch.FloatTensor([label])
         
