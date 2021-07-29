@@ -5,7 +5,7 @@ from PIL import Image, ImageFilter
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-class CUB200(torch.utils.data.Dataset):
+class CUB200(Dataset):
     def __init__(self, path, transform=None, mode=None):
         self.path = path
         self.mode = mode
@@ -19,7 +19,7 @@ class CUB200(torch.utils.data.Dataset):
         img_files, all_targets = [], []
         for i in range(len(img_paths)):
             img_files.append(self.path + '/images/' + img_paths[i][1])
-            all_targets.append(img_labels[i][1] - 1)
+            all_targets.append(img_labels[i] - 1)
         
         self.img_files = img_files
         self.all_targets = all_targets
