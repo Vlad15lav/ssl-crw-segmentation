@@ -48,7 +48,7 @@ class CUB200(Dataset):
             rot_label = torch.FloatTensor([rot_label])
             return img, label, rot_label, self.img_files[index]
         elif self.mode == 'Localize':
-            return img, label, self.bounding_boxes[index] self.img_files[index]
+            return img, label, self.bounding_boxes[index], self.img_files[index]
         
         return img, label, self.img_files[index]
 
