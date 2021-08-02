@@ -6,9 +6,11 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 class CUB200(Dataset):
-    def __init__(self, path, transform=None, mode=None):
+    def __init__(self, path, transform=None, img_size=(600, 600), mode=None):
         self.path = path
         self.mode = mode
+        self.img_size = img_size
+        
         # images paths
         with open(f'{path}/images.txt', 'r') as f:
             img_paths = [x.split() for x in f.read().splitlines()]
@@ -17,7 +19,7 @@ class CUB200(Dataset):
             img_labels = [int(x.split()[-1]) for x in f.read().splitlines()]
         # bounding boxes (xmin, ymin, w, h)
         with open(f'{path}/bounding_boxes.txt', 'r') as f:
-            img_boxes = [int(x.split()[1:]) for x in f.read().splitlines()]
+            img_boxes = [list(map(float, x.split()[1:])) for x in f.read().splitlines()]
         
         img_files, all_targets, bounding_boxes = [], [], []
         for i in range(len(img_paths)):
@@ -54,7 +56,7 @@ class CUB200(Dataset):
 
     def get_img(self, index):
         image_file = self.img_files[index]
-        img = Image.open(image_file).convert('RGB')
+        img = Image.open(image_file).resize(self.img_size).convert('RGB')
         return img
 
     @staticmethod
