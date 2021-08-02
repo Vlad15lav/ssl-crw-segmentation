@@ -10,7 +10,7 @@ class CUB200(Dataset):
         self.path = path
         self.mode = mode
         self.img_size = img_size
-        
+
         # images paths
         with open(f'{path}/images.txt', 'r') as f:
             img_paths = [x.split() for x in f.read().splitlines()]
@@ -48,11 +48,14 @@ class CUB200(Dataset):
             rot_label = random.randint(0, 3)
             img = transforms.functional.rotate(img, 90 * rot_label)
             rot_label = torch.FloatTensor([rot_label])
-            return img, label, rot_label, self.img_files[index]
+            return {'img': img, 'cls': label, 'rot_label': rot_label,
+                    'path': self.img_files[index]}
         elif self.mode == 'Localize':
-            return img, label, self.bounding_boxes[index], self.img_files[index]
+            box = torch.FloatTensor(self.bounding_boxes[index])
+            return {'img': img, 'cls': label, 'box': box,\
+                    'path': self.img_files[index]}
         
-        return img, label, self.img_files[index]
+        return {'img': img, 'cls': label, 'path': self.img_files[index]}
 
     def get_img(self, index):
         image_file = self.img_files[index]
@@ -61,20 +64,22 @@ class CUB200(Dataset):
 
     @staticmethod
     def collate_fn(batch):
-        if self.mode == 'RotNet':
-            img, target, rot_target, path = zip(*batch)
-            rot_target = torch.cat(rot_target, 0)
-        elif self.mode == 'Localize':
-            img, target, boxes, path = zip(*batch)
-            boxes = torch.stack(boxes, 0)
-        else:
-            img, target, path = zip(*batch)
-        
-        img = torch.stack(img, 0)
+        imgs = [s['img'] for s in batch]
+        target = [s['cls'] for s in batch]
+        path = [s['path'] for s in batch]
+
+        imgs = torch.stack(imgs, 0)
         target = torch.cat(target, 0)
-        
-        if self.mode == 'RotNet':
-            path, img, target.type(torch.LongTensor), rot_target.type(torch.LongTensor)
-        elif self.mode == 'Localize':
-            path, img, target.type(torch.LongTensor), boxes.type(torch.LongTensor)
-        return path, img, target.type(torch.LongTensor)
+
+        if 'rot_label' in batch[-1]:
+            rot_target = [s['rot_label'] for s in batch]
+            rot_target = torch.cat(rot_target, 0)
+            return path, imgs, target.type(torch.LongTensor),\
+                    rot_target.type(torch.LongTensor)
+        elif 'box' in batch[-1]:
+            boxes = [s['box'] for s in batch]
+            boxes = torch.stack(boxes, 0)
+            return path, imgs, target.type(torch.LongTensor),\
+                    boxes.type(torch.LongTensor)
+
+        return path, imgs, target.type(torch.LongTensor)
