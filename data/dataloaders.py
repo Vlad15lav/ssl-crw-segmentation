@@ -61,13 +61,14 @@ class CUB200(Dataset):
 
     @staticmethod
     def collate_fn(batch):
-        img, target, path = zip(*batch)
         if self.mode == 'RotNet':
             img, target, rot_target, path = zip(*batch)
             rot_target = torch.cat(rot_target, 0)
         elif self.mode == 'Localize':
             img, target, boxes, path = zip(*batch)
             boxes = torch.stack(boxes, 0)
+        else:
+            img, target, path = zip(*batch)
         
         img = torch.stack(img, 0)
         target = torch.cat(target, 0)
