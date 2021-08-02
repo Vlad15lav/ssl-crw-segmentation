@@ -31,16 +31,17 @@ class CUB200(Dataset):
     def __getitem__(self, index):
         img = self.get_img(index)
         
+        label = self.all_targets[index]
+        label = torch.FloatTensor([label])
+        
         if self.transform is not None:
             img = self.transform(img)
         
         if self.mode == 'RotNet':
-            label = random.randint(0, 3)
-            img = transforms.functional.rotate(img, 90 * label)
-        else:
-            label = self.all_targets[index]
-        
-        label = torch.FloatTensor([label])
+            rot_label = random.randint(0, 3)
+            img = transforms.functional.rotate(img, 90 * rot_label)
+            rot_label = torch.FloatTensor([rot_label])
+            return img, label, rot_label, self.img_files[index]
         
         return img, label, self.img_files[index]
 
@@ -52,6 +53,13 @@ class CUB200(Dataset):
     @staticmethod
     def collate_fn(batch):
         img, target, path = zip(*batch)
+        if self.mode == 'RotNet':
+            img, target, rot_target, path = zip(*batch)
+            rot_target = torch.cat(rot_target, 0)
+        
         img = torch.stack(img, 0)
         target = torch.cat(target, 0)
+        
+        if self.mode == 'RotNet':
+            path, img, target.type(torch.LongTensor), rot_target.type(torch.LongTensor)
         return path, img, target.type(torch.LongTensor)
