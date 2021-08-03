@@ -25,4 +25,9 @@ class RotNet(nn.Module):
             out_rot = self.fc_rot(out)
             return out_cls, out_rot
 
-        return out_cls
+        cls_label = out_cls.argmax(axis=1)
+        cam_weight = self.fc_cls.weight[cls_label]
+        cam_weight = cam_weight.reshape(cam_weight.shape[0],\
+                                        cam_weight.shape[1], 1, 1)
+        classmaps = torch.sum(cam * cam_weight, axis=1)
+        return classmaps, cls_label
