@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 class CUB200(Dataset):
-    def __init__(self, path, transform=None, img_size=(600, 600), mode=None):
+    def __init__(self, path, transform=None, img_size=(448, 448), mode=None):
         self.path = path
         self.mode = mode
         self.img_size = img_size
@@ -37,6 +37,7 @@ class CUB200(Dataset):
 
     def __getitem__(self, index):
         img = self.get_img(index)
+        w, h = img.size
         
         label = self.all_targets[index]
         label = torch.FloatTensor([label])
@@ -52,6 +53,8 @@ class CUB200(Dataset):
                     'path': self.img_files[index]}
         elif self.mode == 'Localize':
             box = torch.FloatTensor(self.bounding_boxes[index])
+            box[[0, 2]] *= self.img_size[1] / w
+            box[[1, 3]] *= self.img_size[0] / h
             return {'img': img, 'cls': label, 'box': box,\
                     'path': self.img_files[index]}
         
