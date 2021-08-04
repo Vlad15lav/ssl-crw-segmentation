@@ -21,11 +21,11 @@ class Network(nn.Module):
         out = self.avgpool(cam)
         out = self.flatten(out)
         
-        out_cls = self.fc_cls(out)
+        cls_out = self.fc_cls(out)
         if self.training:
-            return out_cls
+            return cls_out
 
-        cls_label = out_cls.argmax(axis=1)
+        cls_label = cls_out.argmax(axis=1)
         cam_weight = self.fc_cls.weight[cls_label]
         cam_weight = cam_weight.reshape(cam_weight.shape[0],\
                                         cam_weight.shape[1], 1, 1)
