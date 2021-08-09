@@ -1,6 +1,7 @@
-# ssl-visual-features
-Self-supervised learning
+# Self-Supervised Learning by Contrastive Random Walk
 
 # Pipline
-1. ResNet
-2. Rotation Network
+1. Kinetics400 dataset
+2. CRW
+3. training
+4. testing label propagation
