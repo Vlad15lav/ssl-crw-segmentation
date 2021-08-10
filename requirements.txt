@@ -1,0 +1,8 @@
+numpy
+matplotlib
+av
+cv2
+skimage
+imageio
+wandb
+visdom
