@@ -2,7 +2,7 @@ numpy
 matplotlib
 av
 opencv-python
-skimage
+scikit-image
 imageio
 wandb
 visdom
