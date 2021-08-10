@@ -1,7 +1,7 @@
 numpy
 matplotlib
 av
-cv2
+opencv-python
 skimage
 imageio
 wandb
