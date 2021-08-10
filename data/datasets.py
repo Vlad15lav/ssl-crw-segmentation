@@ -9,20 +9,21 @@ from torchvision.datasets.vision import VisionDataset
 
 
 class Kinetics400(VisionDataset):
-	"""
-	`Kinetics-400 <https://deepmind.com/research/open-source/open-source-datasets/kinetics/>`
-	Arguments:
-		path(str) - path directory of the Kinetics-400 dataset
-		frames_per_clip(int) - number of frames in a clip
-        step_between_clips(int) - number of frames between each clip
-        transform(callable, optional) - torchvision transforms for TxHxWxC video
+    """
+    `Kinetics-400 <https://deepmind.com/research/open-source/open-source-datasets/kinetics/>`
+    Arguments:
+      path(str) - path directory of the Kinetics-400 dataset
+      frames_per_clip(int) - number of frames in a clip
+          step_between_clips(int) - number of frames between each clip
+          transform(callable, optional) - torchvision transforms for TxHxWxC video
     Returns:
         video(Tensor[T, H, W, C]) - T - frame, H - height, W - width, C - channel
         audio(Tensor[K, L]) - K - number of channels, L - number of points
         label(int) - class of the video clip
-	"""
-    def __init__(self, root, frames_per_clip, step_between_clips=1, frame_rate=None,
-                 extensions=('mp4',), transform=None, cached=None, _precomputed_metadata=None):
+    """
+    def __init__(self, root, frames_per_clip, step_between_clips=1, 
+                  frame_rate=None, extensions=('mp4',),
+                  transform=None, cached=None, _precomputed_metadata=None):
         super(Kinetics400, self).__init__(root)
         extensions = extensions
 
