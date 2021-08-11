@@ -12,10 +12,10 @@ class Kinetics400(VisionDataset):
     """
     `Kinetics-400 <https://deepmind.com/research/open-source/open-source-datasets/kinetics/>`
     Arguments:
-      path(str) - path directory of the Kinetics-400 dataset
-      frames_per_clip(int) - number of frames in a clip
-          step_between_clips(int) - number of frames between each clip
-          transform(callable, optional) - torchvision transforms for TxHxWxC video
+        path(str) - path directory of the Kinetics-400 dataset
+        frames_per_clip(int) - number of frames in a clip
+        step_between_clips(int) - number of frames between each clip
+        transform(callable, optional) - torchvision transforms for TxHxWxC video
     Returns:
         video(Tensor[T, H, W, C]) - T - frame, H - height, W - width, C - channel
         audio(Tensor[K, L]) - K - number of channels, L - number of points
