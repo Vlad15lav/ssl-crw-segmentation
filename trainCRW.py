@@ -2,6 +2,7 @@ import argparse
 import os
 import math
 import numpy as np
+import torch
 
 from torch.utils.data.sampler import RandomSampler
 from torch.utils.data import DataLoader
@@ -24,7 +25,7 @@ def get_args():
     parser.add_argument('--cont-train', help='use last weights', action="store_true")
 
     parser.add_argument('--img_size', type=int, default=256, help='image size')
-    parser.add_argument('--bs', '--batch-size', type=int, default=8, help='batch size')
+    parser.add_argument('--bs', type=int, default=8, help='batch size')
     parser.add_argument('--epoches', type=int, default=100, help='number of epoches')
     
     parser.add_argument('--lr', type=float, default=0.005, help='init learning rate')
@@ -97,7 +98,7 @@ if __name__ == '__main__':
     # validset = Kinetics400(root=opt.data_path + '/valid', frames_per_clip=8, step_between_clips=1,
     #                         frame_rate=8)#, transform=transform_train)
     train_sampler = RandomSampler(trainset)
-    trainloader = DataLoader(trainset, batch_size=opt.batch_size, sampler=train_sampler,
+    trainloader = DataLoader(trainset, batch_size=opt.bs, sampler=train_sampler,
                     num_workers=opt.n_work, pin_memory=True, collate_fn=collate_fn)
     # validloader = DataLoader(validset, batch_size=opt.batch_size, sampler=train_sampler,
     #                 num_workers=opt.n_work, pin_memory=True, collate_fn=collate_fn)
@@ -115,5 +116,13 @@ if __name__ == '__main__':
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr,
             momentum=cfg.momentum, weight_decay=opt.wd)
+    
+    for video, org in trainloader:
+        break
+    
+    print(video)
+    print(org)
+    print(len(video))
+    print(org)
 
-    train(model, trainloader, validloader, optimizer, lr_schedule, opt)
+    #train(model, trainloader, validloader, optimizer, lr_schedule, opt)
