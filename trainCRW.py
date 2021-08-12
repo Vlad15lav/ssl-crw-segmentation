@@ -24,7 +24,9 @@ def get_args():
     parser.add_argument('--pretrained', help='load imagenet weights', action="store_true")
     parser.add_argument('--cont-train', help='use last weights', action="store_true")
 
-    parser.add_argument('--img_size', type=int, default=256, help='image size')
+    parser.add_argument('--img-size', nargs='+', type=int, default=[256, 256], help='image size')
+    parser.add_argument('--mean-norm', nargs='+', type=int, default=[0.4914, 0.4822, 0.4465], help='mean pixel')
+    parser.add_argument('--std-norm', nargs='+', type=int, default=[0.2023, 0.1994, 0.2010], help='std pixel')
     parser.add_argument('--bs', type=int, default=8, help='batch size')
     parser.add_argument('--epoches', type=int, default=100, help='number of epoches')
     
