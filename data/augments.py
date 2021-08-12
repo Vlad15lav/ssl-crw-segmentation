@@ -27,5 +27,5 @@ def get_train_augmentation(opt):
         transf.append(cj)
     if 'flip' in aug_list:
         transf.append(flip_aug)
-    
+    transf.append(norm_aug)
     return transforms.Compose(transf)
