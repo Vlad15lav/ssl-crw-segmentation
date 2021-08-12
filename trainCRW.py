@@ -70,11 +70,13 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
             loss_batch.append(loss.item())
         train_loss.append(np.mean(loss_batch))
         
+        # TODO: Valid
+
         # print status training
         print(f'epoche {epoch}: train loss {train_loss[-1]}')
 
         # save last and best weights
-        if len(val_mAP) > 1 and val_mAP[-1] > np.max(val_mAP[:-1]):
+        if len(val_loss) > 1 and val_loss[-1] < np.min(val_loss[:-1]):
             torch.save(model.state_dict(), f'{opt.weight_path}/best_weights.pth')
         torch.save(model.state_dict(), f'{opt.weight_path}/last_weights.pth')
  
