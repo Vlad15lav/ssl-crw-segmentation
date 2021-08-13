@@ -12,6 +12,7 @@ from tqdm import tqdm
 from IPython import display
 
 from data.datasets import Kinetics400
+from data.augments import get_train_augmentation
 from models.resnet import get_resnet
 from utils.util import collate_fn, get_sheduler, adjust_learning_rate
 
@@ -25,7 +26,7 @@ def get_args():
     parser.add_argument('--cont-train', help='use last weights', action="store_true")
 
     parser.add_argument('--img-size', nargs='+', type=int, default=[256, 256], help='image size')
-    parser.add_argument('--augs', type=str, default='crop' help='select augmentation (crop, jitter, flip, grid)')
+    parser.add_argument('--augs', type=str, default='crop', help='select augmentation (crop, jitter, flip, grid)')
     parser.add_argument('--patch-size', nargs='+', type=int, default=[64, 64], help='patch size')
     parser.add_argument('--mean-norm', nargs='+', type=int, default=[0.4914, 0.4822, 0.4465], help='mean pixel')
     parser.add_argument('--std-norm', nargs='+', type=int, default=[0.2023, 0.1994, 0.2010], help='std pixel')
@@ -60,12 +61,12 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
         # training
         model.train()
         loss_batch = []
-        for i, (video, orig) in enumerate(trainloader):
+        for i, clip in enumerate(trainloader):
             adjust_learning_rate(optimizer, lr_schedule, epoch * len(trainloader) + i)
             optimizer.zero_grad()
 
-            video = Variable(video.to(opt.device))
-            output, loss, diagnostics = model(video)
+            clip = Variable(clip.to(opt.device))
+            output, loss, diagnostics = model(clip)
             loss = loss.mean()
 
             loss.backward()
@@ -97,7 +98,7 @@ if __name__ == '__main__':
         os.makedirs(opt.weight_path)
 
     # load dataloaders
-    transform_train = get_train_transforms()
+    transform_train = get_train_augmentation(opt)
 
     trainset = Kinetics400(root=opt.data_path + '/train', frames_per_clip=8, step_between_clips=1,
                             frame_rate=8, transform=transform_train)
@@ -116,19 +117,17 @@ if __name__ == '__main__':
     # optimizer and sheduler
     lr_schedule = get_sheduler(opt.lr, opt.final_lr, len(trainloader), opt.epoches, opt.warm_up, opt.wup_lr)
 
-    if opt.adam:
-        optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr,
-            weight_decay=opt.wd)
-    else:
-        optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr,
-            momentum=cfg.momentum, weight_decay=opt.wd)
+#     if opt.adam:
+#         optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr,
+#             weight_decay=opt.wd)
+#     else:
+#         optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr,
+#             momentum=cfg.momentum, weight_decay=opt.wd)
     
-    for video, org in trainloader:
+    for video in trainloader:
         break
     
     print(video)
-    print(org)
     print(len(video))
-    print(org)
 
     #train(model, trainloader, validloader, optimizer, lr_schedule, opt)
