@@ -7,27 +7,51 @@ from torchvision import transforms
 from PIL import Image
 
 class CropPatches(object):
-    def __init__(self, patch_shape=(64, 64, 3), stride=(0.5, 0.5)):
-        self.patch_shape = patch_shape        
+    def __init__(self, transform, patch_shape=(64, 64, 3), stride=(0.5, 0.5)):
+        self.transform = transforms.Compose(transform)
+        self.patch_shape = patch_shape
+        
         stride = np.random.random() * (stride[1] - stride[0]) + stride[0]
-        self.stride = [int(shape[0]*stride), int(shape[1]*stride), shape[2]]
+        self.stride = [int(patch_shape[0]*stride), int(patch_shape[1]*stride),
+                       patch_shape[2]]
 
         self.spatial_jitter = transforms.Compose([
             lambda x: Image.fromarray(x),
-            transforms.RandomResizedCrop(shape[0], scale=(0.7, 0.9))
+            transforms.RandomResizedCrop(patch_shape[0], scale=(0.7, 0.9))
         ])
 
     def __call__(self, x):
         if torch.is_tensor(x):
-            x = x.numpy().transpose(1, 2, 0)
+            x = x.numpy()
         elif 'PIL' in str(type(x)):
-            x = np.array(x)#.transpose(2, 0, 1)
+            x = np.array(x)
+        
+        if x.shape[0] == 3:
+            x = x.transpose(1, 2, 0)
         
         winds = skimage.util.view_as_windows(x, self.patch_shape, step=self.stride)
         winds = winds.reshape(-1, *winds.shape[-3:])
 
-        P = [transform(spatial_jitter(w)) for w in winds]
+        P = [self.transform(self.spatial_jitter(w)) for w in winds]
         return torch.cat(P, dim=0)
+
+class MapTransform(object):
+    def __init__(self, transforms, pil_convert=True):
+        self.transforms = transforms
+        self.pil_convert = pil_convert
+
+    def __call__(self, vid):
+        if isinstance(vid, Image.Image):
+            return np.stack([self.transforms(vid)])
+        
+        if isinstance(vid, torch.Tensor):
+            vid = vid.numpy()
+
+        if self.pil_convert:
+            x = np.stack([np.asarray(self.transforms(Image.fromarray(v))) for v in vid])
+            return x
+        else:
+            return np.stack([self.transforms(v) for v in vid])
 
 def get_train_augmentation(opt):
     aug_list = [opt.augs]
@@ -50,9 +74,10 @@ def get_train_augmentation(opt):
         transf.append(cj)
     if 'flip' in aug_list:
         transf.append(flip_aug)
-    transf.append(norm_aug)
 
     if 'grid' in aug_list:
-        transf.append(CropPatches())
+        transf.append(CropPatches(norm_aug))
+    else:
+        transf += norm_aug
 
-    return transforms.Compose(transf)
+    return MapTransform(transforms.Compose(transf))
