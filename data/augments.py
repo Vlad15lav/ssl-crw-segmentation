@@ -8,7 +8,7 @@ from PIL import Image
 
 class CropPatches(object):
     def __init__(self, patch_shape=(64, 64, 3), stride=(0.5, 0.5)):
-        self.patch_shape = patch_size        
+        self.patch_shape = patch_shape        
         stride = np.random.random() * (stride[1] - stride[0]) + stride[0]
         self.stride = [int(shape[0]*stride), int(shape[1]*stride), shape[2]]
 
