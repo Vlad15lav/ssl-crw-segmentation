@@ -96,11 +96,11 @@ if __name__ == '__main__':
     if not os.path.exists(opt.weight_path):
         os.makedirs(opt.weight_path)
 
-    # load data loaders
-    #transform_train = get_train_transforms()
+    # load dataloaders
+    transform_train = get_train_transforms()
 
     trainset = Kinetics400(root=opt.data_path + '/train', frames_per_clip=8, step_between_clips=1,
-                            frame_rate=8)#, transform=transform_train)
+                            frame_rate=8, transform=transform_train)
     # validset = Kinetics400(root=opt.data_path + '/valid', frames_per_clip=8, step_between_clips=1,
     #                         frame_rate=8)#, transform=transform_train)
     train_sampler = RandomSampler(trainset)
