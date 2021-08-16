@@ -199,8 +199,9 @@ class ResNet(nn.Module):
         x = self.layer2(x)
         x = x if self.layer3 is None else self.layer3(x) 
         x = x if self.layer4 is None else self.layer4(x)
-
-        x = torch.flatten(x, 1) if self.avgpool is None else self.avgpool(x)
+        
+        # torch.flatten(x, 1)
+        x = x if self.avgpool is None else self.avgpool(x)
         x = x if self.fc is None else self.fc(x)
         return x
 
