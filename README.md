@@ -1,4 +1,4 @@
-# Self-Supervised Learning by Contrastive Random Walk
+# Video Understanding by Contrastive Random Walk
 
 ## Requirements
 ```
