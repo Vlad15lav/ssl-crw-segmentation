@@ -88,7 +88,7 @@ class CRW(nn.Module):
         ## Walk Loss
         target = torch.arange(At.shape[-1])[None]. \
             repeat(At.shape[0], 1).view(-1).to(At.device)
-        loss = self.criterion(torch.log(At+EPS).flatten(0, -2), target)
+        loss = self.criterion(torch.log(At + EPS).flatten(0, -2), target)
         acc = (torch.argmax(logits, dim=-1) == target).float().mean()
 
         return q, loss, acc
