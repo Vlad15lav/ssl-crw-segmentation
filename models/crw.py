@@ -5,19 +5,23 @@ import torch.nn.functional as F
 from models.resnet import get_resnet
 
 # TODO
+EPS = 1e-20
+
 class CRW(nn.Module):
     def __init__(self):
         super(CRW, self).__init__()
         self.temperature = 0.05
         self.dropout = 0.1
-        self.edge_dropout = 0.1
+        self.edgedrop = 0.1
 
         self.encoder = get_resnet(18)
         self.find_vector_dim()
         self.head = self.add_head(3)
 
         self.dropout = nn.Dropout(p=self.dropout, inplace=False)
-        self.featdrop = nn.Dropout(p=self.edge_dropout, inplace=False)
+        self.featdrop = nn.Dropout(p=self.edgedrop, inplace=False)
+
+        self.criterion = nn.CrossEntropyLoss()
 
     def find_vector_dim(self):
         out = self.encoder(torch.zeros(1, 3, 256, 256).to(
@@ -34,6 +38,10 @@ class CRW(nn.Module):
             layers.append(nn.Linear(self.encoder_out_dim, 128))
         return nn.Sequential(*layers)
 
+    def trans_energies(self, A):
+        A[torch.rand_like(A) < self.edgedrop] = -1e10 # edge dropout
+        return F.softmax(A / self.temperature, dim=-1) # shaping
+
     def forward(self, x):
         """
         x is (B, T, C*N, H, W)
@@ -41,7 +49,7 @@ class CRW(nn.Module):
         N - number of patches
         """
         B, T, CN, H, W = x.shape
-        N = CN // 3
+        C, N = 3, CN // 3
         x = x.transpose(1, 2).view(B, N, 3, T, H, W) # (B, N, C, T, H, W)
 
         x = x.flatten(0, 1) # (BN, C, T, H, W)
@@ -53,7 +61,7 @@ class CRW(nn.Module):
         c, h, w = maps.shape[-3:]
         maps = maps.view(B*N, T, c, h, w).transpose(1, 2) # (BN, c, T, h, w)
 
-        if self.edge_dropout > 0:
+        if self.edgedrop > 0:
             maps = self.featdrop(maps)
         
         q = maps.sum(-1).sum(-1) / (h * w) # (BN, c, T)
@@ -61,5 +69,26 @@ class CRW(nn.Module):
         q = F.normalize(q, p=2, dim=1) # l2 norm vector (BN, c, T)
         
         # to embed patches (B x c x T x N) and maps (B, N, c, T, h, w)
-        q = q.view(B, N, c, T).permute(0, 2, 3, 1)
-        maps = maps.view(B, N, c, T, h, w)
+        q = q.view(B, N, q.shape[1], T).permute(0, 2, 3, 1)
+        maps = maps.view(B, N, *maps.shape[1:])
+
+        # transitions from t to t+1 (B x T-1 x N x N)
+        A = torch.einsum('bctn,bctm->btnm', q[:, :, :-1],
+                          q[:, :, 1:]) / self.temperature
+
+        ## Transition energies for palindrome graph
+        AA = torch.cat((A, torch.flip(A, dims=[1]).transpose(-1,-2)), dim=1)
+        AA[torch.rand_like(AA) < self.edgedrop] = -1e10
+        At = torch.diag_embed(torch.ones((B, N)))
+
+        ## Compute walks
+        for t in range(2 * T - 2):
+            At = torch.bmm(F.softmax(AA[:, t], dim=-1), At)
+        
+        ## Walk Loss
+        target = torch.arange(At.shape[-1])[None]. \
+            repeat(At.shape[0], 1).view(-1).to(At.device)
+        loss = self.criterion(torch.log(At+EPS).flatten(0, -2), target)
+        acc = (torch.argmax(logits, dim=-1) == target).float().mean()
+
+        return q, loss, acc
