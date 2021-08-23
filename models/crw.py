@@ -78,7 +78,7 @@ class CRW(nn.Module):
         ## Transition energies for palindrome graph
         AA = torch.cat((A, torch.flip(A, dims=[1]).transpose(-1,-2)), dim=1)
         AA[torch.rand_like(AA) < self.edgedrop_rate] = -1e10
-        At = torch.diag_embed(torch.ones((B, N)))
+        At = torch.diag_embed(torch.ones((B, N))).to(A.device)
 
         ## Compute walks
         for t in range(2 * T - 2):
