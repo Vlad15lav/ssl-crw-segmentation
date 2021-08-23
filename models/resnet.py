@@ -198,11 +198,8 @@ class ResNet(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = x if self.layer3 is None else self.layer3(x) 
-        x = x if self.layer4 is None else self.layer4(x)
-        
-        # torch.flatten(x, 1)
-        x = x if self.avgpool is None else self.avgpool(x)
-        x = x if self.fc is None else self.fc(x)
+        x = x if self.layer4 is None else self.layer4(x) 
+    
         return x
 
 def resnet18():
@@ -220,6 +217,7 @@ def resnet101():
 def get_resnet(depth, pretrained=False):
     if depth == 18:
         model = resnet18()
+        model.modify(padding='reflect')
     elif depth == 34:
         model = resnet34()
     elif depth == 50:
