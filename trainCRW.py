@@ -134,3 +134,4 @@ if __name__ == '__main__':
             momentum=cfg.momentum, weight_decay=opt.wd)
     
     train(model, trainloader, optimizer, lr_schedule, opt)
+    
