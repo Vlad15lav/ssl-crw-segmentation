@@ -4,23 +4,22 @@ import torch.nn.functional as F
 
 from models.resnet import get_resnet
 
-# TODO
 EPS = 1e-20
 
 class CRW(nn.Module):
-    def __init__(self):
+    def __init__(self, opt):
         super(CRW, self).__init__()
-        self.temperature = 0.05
-        self.dropout = 0.1
-        self.edgedrop = 0.1
+        self.temperature = opt.temperature
+        self.featdrop_rate = opt.featdrop
+        self.edgedrop_rate = opt.edgedrop
 
-        self.encoder = get_resnet(18)
+        self.encoder = get_resnet(opt.depth)
         self.find_vector_dim()
-        self.head = self.add_head(3)
+        self.head = self.add_head(opt.head_depth)
 
-        self.dropout = nn.Dropout(p=self.dropout, inplace=False)
-        self.featdrop = nn.Dropout(p=self.edgedrop, inplace=False)
-
+        self.featdrop = nn.Dropout(p=self.featdrop_rate, inplace=False)
+        #self.dropout = nn.Dropout(p=self.edgedrop_rate, inplace=False)
+        
         self.criterion = nn.CrossEntropyLoss()
 
     def find_vector_dim(self):
@@ -31,16 +30,16 @@ class CRW(nn.Module):
 
     def add_head(self, depth_head=0):
         layers = []
-        if depth_head:
+        if depth_head >= 0:
             for _ in range(depth_head - 1):
                 layers.append(nn.Linear(self.encoder_out_dim, self.encoder_out_dim))
                 layers.append(nn.ReLU())
             layers.append(nn.Linear(self.encoder_out_dim, 128))
         return nn.Sequential(*layers)
 
-    def trans_energies(self, A):
-        A[torch.rand_like(A) < self.edgedrop] = -1e10 # edge dropout
-        return F.softmax(A / self.temperature, dim=-1) # shaping
+    # def trans_energies(self, A):
+    #     A[torch.rand_like(A) < self.edgedrop] = -1e10 # edge dropout
+    #     return F.softmax(A / self.temperature, dim=-1) # shaping
 
     def forward(self, x):
         """
@@ -61,7 +60,7 @@ class CRW(nn.Module):
         c, h, w = maps.shape[-3:]
         maps = maps.view(B*N, T, c, h, w).transpose(1, 2) # (BN, c, T, h, w)
 
-        if self.edgedrop > 0:
+        if self.featdrop_rate > 0:
             maps = self.featdrop(maps)
         
         q = maps.sum(-1).sum(-1) / (h * w) # (BN, c, T)
@@ -78,7 +77,7 @@ class CRW(nn.Module):
 
         ## Transition energies for palindrome graph
         AA = torch.cat((A, torch.flip(A, dims=[1]).transpose(-1,-2)), dim=1)
-        AA[torch.rand_like(AA) < self.edgedrop] = -1e10
+        AA[torch.rand_like(AA) < self.edgedrop_rate] = -1e10
         At = torch.diag_embed(torch.ones((B, N)))
 
         ## Compute walks
