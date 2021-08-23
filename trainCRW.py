@@ -13,7 +13,7 @@ from IPython import display
 
 from data.datasets import Kinetics400
 from data.augments import get_train_augmentation
-from models.сrw import CRW
+from models.crw import CRW
 from utils.util import collate_fn, get_sheduler, adjust_learning_rate
 
 def get_args():
@@ -26,7 +26,7 @@ def get_args():
     parser.add_argument('--pretrained', help='load imagenet weights', action="store_true")
     parser.add_argument('--cont-train', help='use last weights', action="store_true")
     parser.add_argument('--temperature', type=float, default=0.05, help='(temperature) shaping')
-    parser.add_argument('--featdrop', type=float, default=0.1, help='dropout rate on maps)
+    parser.add_argument('--featdrop', type=float, default=0.1, help='dropout rate on maps')
     parser.add_argument('--edgedrop', type=float, default=0.0, help=' dropout rate on A')
 
     parser.add_argument('--img-size', nargs='+', type=int, default=[256, 256], help='image size')
@@ -55,7 +55,7 @@ def get_args():
     return args
 
 
-def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
+def train(model, trainloader, optimizer, lr_schedule, opt):
     train_loss, val_loss = [], []
     
     if not os.path.exists(opt.weight_path):
@@ -75,8 +75,8 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
             optimizer.zero_grad()
 
             clip = Variable(clip.to(opt.device))
-            output, loss, diagnostics = model(clip)
-            loss = loss.mean()
+            q, loss, acc = model(clip)
+            #loss = loss.mean()
 
             loss.backward()
             optimizer.step()
@@ -90,7 +90,7 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
         print(f'epoche {epoch}: train loss {train_loss[-1]}')
 
         # save last and best weights
-        if len(val_loss) > 1 and val_loss[-1] < np.min(val_loss[:-1]):
+        if len(train_loss) > 1 and train_loss[-1] < np.min(train_loss[:-1]):
             torch.save(model.state_dict(), f'{opt.weight_path}/best_weights.pth')
         torch.save(model.state_dict(), f'{opt.weight_path}/last_weights.pth')
  
@@ -133,4 +133,4 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr,
             momentum=cfg.momentum, weight_decay=opt.wd)
     
-    #train(model, trainloader, validloader, optimizer, lr_schedule, opt)
+    train(model, trainloader, optimizer, lr_schedule, opt)
