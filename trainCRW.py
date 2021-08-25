@@ -15,7 +15,7 @@ from IPython import display
 from data.datasets import Kinetics400
 from data.augments import get_train_augmentation
 from models.crw import CRW
-from utils.util import collate_fn, get_sheduler, adjust_learning_rate
+from utils.util import _get_cache_path, collate_fn, get_sheduler, adjust_learning_rate
 
 def get_args():
     parser = argparse.ArgumentParser('Training CRW')
@@ -115,8 +115,9 @@ if __name__ == '__main__':
     # load dataloaders
     transform_train = get_train_augmentation(opt)
     
-#     if os.path.exists(opt.cache_path):
-#         dataset, _ = torch.load(opt.cache_path)
+    cache_path = _get_cache_path(opt.cache_path)
+#     if os.path.exists(cache_path):
+#         dataset, _ = torch.load(cache_path)
 #         cached = dict(video_paths=dataset.video_clips.video_paths,
 #                 video_fps=dataset.video_clips.video_fps,
 #                 video_pts=dataset.video_clips.video_pts)
