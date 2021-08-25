@@ -1,3 +1,4 @@
+import hashlib
 import math
 import numpy as np
 
@@ -5,10 +6,19 @@ from torch.utils.data.dataloader import default_collate
 
 def collate_fn(batch):
     """
-	  batch creator
+    batch creator
     """
     batch = [d[0] for d in batch]
     return default_collate(batch)
+
+def _get_cache_path(filepath):
+    """
+    catch path creator
+    """
+    h = hashlib.sha1(filepath.encode()).hexdigest()
+    cache_path = os.path.join(filepath, h[:10] + ".pt")
+    cache_path = os.path.expanduser(cache_path)
+    return cache_path
 
 def get_sheduler(lr, final_lr, batches, epoches, warmup_epochs=10, warmup_lr=1e-5):
     """
