@@ -21,6 +21,7 @@ def get_args():
     parser = argparse.ArgumentParser('Training CRW')
     parser.add_argument('--data-path', type=str, help='path dataset')
     parser.add_argument('--weight-path', type=str, default='state/crw', help='path for logs, weights training')
+    parser.add_argument('--cache-path', type=str, help='cache file dataset')
 
     parser.add_argument('--depth', type=int, default=18, help='depth resnet model')
     parser.add_argument('--head-depth', type=int, default=0, help='depth head')
@@ -57,46 +58,50 @@ def get_args():
 
 
 def train(model, trainloader, optimizer, lr_schedule, opt):
-    train_loss, val_loss = [], []
+    train_loss, train_acc = [], []
     
     if not os.path.exists(opt.weight_path):
         f_log = open(f'{opt.weight_path}/log_training.pickle', 'rb')
         obj = pickle.load(f_log)
-        train_loss, val_loss = obj
+        train_loss, train_acc = obj
         f_log.close()
     
     for epoch in tqdm(range(len(train_loss), opt.epoches)):
-        #display.clear_output(wait=True)
+        display.clear_output(wait=True)
         
         # training
         model.train()
-        loss_batch = []
+        loss_batch, acc_batch = [], []
         for i, clip in enumerate(trainloader):
             adjust_learning_rate(optimizer, lr_schedule, epoch * len(trainloader) + i)
             optimizer.zero_grad()
 
             clip = Variable(clip.to(opt.device))
             q, loss, acc = model(clip)
-            #loss = loss.mean()
 
             loss.backward()
             optimizer.step()
 
             loss_batch.append(loss.item())
-        train_loss.append(np.mean(loss_batch))
+            acc_batch.append(acc.cpu())
         
-        # TODO: Valid
-
+        train_loss.append(np.mean(loss_batch))
+        train_acc.append(np.mean(acc_batch))
+        
         # print status training
-        print(f'epoche {epoch}: train loss {train_loss[-1]}')
+        print(f'epoche {epoch}: train loss: {train_loss[-1]} accuracy: {train_acc[-1]}')
 
         # save last and best weights
-        if len(train_loss) > 1 and train_loss[-1] < np.min(train_loss[:-1]):
-            torch.save(model.state_dict(), f'{opt.weight_path}/best_weights.pth')
-        torch.save(model.state_dict(), f'{opt.weight_path}/last_weights.pth')
+        checkpoint = {
+                'model': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                'epoch': epoch}
+        torch.save(
+                checkpoint,
+                os.path.join(opt.weight_path, 'checkpoint.pth'))
  
         # log history
-        lists = (train_loss, val_loss)
+        lists = (train_loss, train_acc)
         f_log = open(f'{opt.weight_path}/log_training.pickle', 'wb')
         pickle.dump(lists, f_log)
         f_log.close()
@@ -109,21 +114,30 @@ if __name__ == '__main__':
 
     # load dataloaders
     transform_train = get_train_augmentation(opt)
-
-    trainset = Kinetics400(root=opt.data_path + '/train', frames_per_clip=opt.clip_len, step_between_clips=1,
-                            frame_rate=opt.frame_skip, transform=transform_train)
-    # validset = Kinetics400(root=opt.data_path + '/valid', frames_per_clip=8, step_between_clips=1,
-    #                         frame_rate=8)#, transform=transform_train)
+    
+#     if os.path.exists(opt.cache_path):
+#         dataset, _ = torch.load(opt.cache_path)
+#         cached = dict(video_paths=dataset.video_clips.video_paths,
+#                 video_fps=dataset.video_clips.video_fps,
+#                 video_pts=dataset.video_clips.video_pts)
+#     else:
+#         cache = None
+    
+    trainset = Kinetics400(root=opt.data_path + '/train',
+                           frames_per_clip=opt.clip_len,
+                           step_between_clips=1,
+                           transform=transform_train,
+                           extensions=('mp4'),
+                           frame_rate=opt.frame_skip,
+                           _precomputed_metadata=None)#cache) # cache
+    
     train_sampler = RandomSampler(trainset)
     trainloader = DataLoader(trainset, batch_size=opt.bs, sampler=train_sampler,
                     num_workers=opt.n_work, pin_memory=True, collate_fn=collate_fn)
-    # validloader = DataLoader(validset, batch_size=opt.batch_size, sampler=train_sampler,
-    #                 num_workers=opt.n_work, pin_memory=True, collate_fn=collate_fn)
-
-    # TODO: load model
+    
+    # create crw model
     model = CRW(opt).to(opt.device)
-    # model.load_state_dict(torch.load(f'{opt.weight_path}/last_weights.pth'))
-
+    
     # optimizer and sheduler
     lr_schedule = get_sheduler(opt.lr, opt.final_lr, len(trainloader), opt.epoches, opt.warm_up, opt.wup_lr)
 
@@ -133,6 +147,12 @@ if __name__ == '__main__':
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr,
             momentum=cfg.momentum, weight_decay=opt.wd)
+    
+    # load checkpoing weights
+    if not os.path.exists(opt.weight_path) and opt.cont_train:
+        checkpoint = torch.load(f'{opt.weight_path}/checkpoint.pth')
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
     
     train(model, trainloader, optimizer, lr_schedule, opt)
     
