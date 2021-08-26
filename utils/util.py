@@ -11,7 +11,7 @@ def collate_fn(batch):
     batch = [d[0] for d in batch]
     return default_collate(batch)
 
-def _get_cache_path(filepath):
+def get_cache_path(filepath):
     """
     catch path creator
     """
