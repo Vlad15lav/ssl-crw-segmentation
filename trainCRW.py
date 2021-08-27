@@ -34,8 +34,6 @@ def get_args():
     parser.add_argument('--img-size', nargs='+', type=int, default=[256, 256], help='image size')
     parser.add_argument('--clip-len', default=4, type=int, metavar='N',
                         help='number of frames per clip')
-    # parser.add_argument('--clips-per-video', default=5, type=int, metavar='N',
-    #                     help='maximum number of clips per video to consider')
     parser.add_argument('--frame-skip', default=8, type=int, help='kinetics: fps | others: skip between frames')
     parser.add_argument('--augs', type=str, default='crop', help='select augmentation (crop, jitter, flip, grid)')
     parser.add_argument('--patch-size', nargs='+', type=int, default=[64, 64], help='patch size')
