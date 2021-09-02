@@ -152,5 +152,6 @@ class DAVIS(torch.utils.data.Dataset):
 
         if np.all((mask_set[1:] - mask_set[:-1]) == 1):
             mask_set = mask_set[:, :1]
-
-        return imgs, imgs_orig, masks, mask_set
+        
+        meta = {'path_images': class_imgs, 'path_masks': class_masks, 'class':self.classes_list[index]}
+        return imgs, imgs_orig, masks, mask_set, meta
