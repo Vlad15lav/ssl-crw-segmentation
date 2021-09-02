@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 import torchvision.datasets.video_utils
