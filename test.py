@@ -44,7 +44,7 @@ if __name__ == '__main__':
     dataset = DAVIS(opt)
 
     # create dataloader
-    dataloader = DataLoader(dataset, batch_size=opt.bs, shuffle=False
+    dataloader = DataLoader(dataset, batch_size=opt.bs, shuffle=False,
                     num_workers=opt.n_work, pin_memory=True)
     
     # create crw model
