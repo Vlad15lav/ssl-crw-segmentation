@@ -24,7 +24,7 @@ def get_args():
     parser.add_argument('--head-depth', type=int, default=0, help='depth head')
     parser.add_argument('--temperature', type=float, default=0.05, help='(temperature) shaping')
     parser.add_argument('--featdrop', type=float, default=0.1, help='dropout rate on maps')
-    parser.add_argument('--edgedrop', type=float, default=0.0, help=' dropout rate on A')
+    parser.add_argument('--edgedrop', type=float, default=0.0, help='dropout rate on A')
 
     parser.add_argument('--img-size', nargs='+', type=int, default=[256, 256], help='image size')
     parser.add_argument('--video-len', type=int, default=20, help='number of context frames')
