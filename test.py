@@ -29,13 +29,38 @@ def get_args():
     parser.add_argument('--img-size', nargs='+', type=int, default=[256, 256], help='image size')
     parser.add_argument('--video-len', type=int, default=20, help='number of context frames')
     parser.add_argument('--patch-size', nargs='+', type=int, default=[64, 64], help='patch size')
-    parser.add_argument('--bs', type=int, default=8, help='batch size')
+    parser.add_argument('--bs', type=int, default=1, help='batch size')
+    parser.add_argument('--fs', type=int, default=5, help='batch frame size')
     
     parser.add_argument('--n_work', type=int, default=2, help='number of gpu')
     parser.add_argument('--device', type=str, default='cuda', help='use cpu or cuda')
 
     args = parser.parse_args()
     return args
+
+def test(model, dataloader, opt):
+    #
+    for imgs, imgs_orig, masks, mask_set in dataloader:
+        imgs = imgs.to(opt.device)
+        B, T, C, W, H = imgs.shape
+
+        with torch.no_grad():
+            embeds = []
+            for split in range(0, T, opt.fs):
+                batch_imgs = imgs[:, split:split+opt.fs].transpose(1, 2). \
+                    to(opt.device) # (B, C, opt.fs, H, W)
+                batch_imgs = batch_imgs.permute(0, 2, 1, 3, 4).contiguous(). \
+                    view(-1, C, H, W) # (B*opt.fs, C, H, W)
+                embed = model(batch_imgs) # (B*opt.fs, c, h, w)
+                _, c, h, w = embed.shape
+                embed = embed.view(B, T, c, h, w).permute(0, 2, 1, 3, 4)
+                embeds.append(embed.cpu())
+            embeds = torch.cat(embeds, dim=2).squeeze(1)
+            embeds = torch.nn.functional.normalize(embeds, dim=1)
+        
+        # 
+        torch.cuda.empty_cache()
+        
 
 if __name__ == '__main__':
     opt = get_args()
@@ -54,4 +79,4 @@ if __name__ == '__main__':
     checkpoint = torch.load(opt.weight_path)
     model.load_state_dict(checkpoint['model'])
     
-    # TODO: Label prob test
+    test(model.encoder, dataloader, opt)
