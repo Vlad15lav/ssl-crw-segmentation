@@ -40,7 +40,7 @@ def get_args():
 
 def test(model, dataloader, opt):
     #
-    for imgs, imgs_orig, masks, mask_set in dataloader:
+    for imgs, imgs_orig, masks, mask_set, meta in dataloader:
         imgs = imgs.to(opt.device)
         B, T, C, W, H = imgs.shape
 
