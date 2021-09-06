@@ -131,7 +131,7 @@ class DAVIS(torch.utils.data.Dataset):
             mask = cv2.imread(mask_path)
 
             # resize image and mask
-            img = resize(img, self.img_size)
+            img = resize(img, *self.img_size)
             mask = cv2.resize(mask, self.img_size, cv2.INTER_NEAREST)
 
             img_orig = img.clone()
