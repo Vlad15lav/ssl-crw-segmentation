@@ -53,7 +53,7 @@ def test(model, dataloader, opt):
                     view(-1, C, H, W) # (B*opt.fs, C, H, W)
                 embed = model(batch_imgs) # (B*opt.fs, c, h, w)
                 _, c, h, w = embed.shape
-                embed = embed.view(B, T, c, h, w).permute(0, 2, 1, 3, 4)
+                embed = embed.view(B, opt.fs, c, h, w).permute(0, 2, 1, 3, 4)
                 embeds.append(embed.cpu())
             embeds = torch.cat(embeds, dim=2).squeeze(1)
             embeds = torch.nn.functional.normalize(embeds, dim=1)
