@@ -166,4 +166,3 @@ if __name__ == '__main__':
         optimizer.load_state_dict(checkpoint['optimizer'])
     
     train(model, trainloader, optimizer, lr_schedule, opt)
-    
