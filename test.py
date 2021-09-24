@@ -58,7 +58,7 @@ def test(model, dataloader, opt):
             embeds = torch.cat(embeds, dim=2).squeeze(1)
             embeds = torch.nn.functional.normalize(embeds, dim=1)
         
-        # 
+        # Label Propagation
         torch.cuda.empty_cache()
         
 
