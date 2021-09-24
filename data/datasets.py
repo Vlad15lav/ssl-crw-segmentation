@@ -64,6 +64,7 @@ class Kinetics400(VisionDataset):
 
 class DAVIS(torch.utils.data.Dataset):
     """
+    Information about DAVIS Dataset
     https://davischallenge.org/
     """
     def __init__(self, opt):
