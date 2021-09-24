@@ -18,7 +18,6 @@ class CRW(nn.Module):
         self.head = self.add_head(opt.head_depth)
 
         self.featdrop = nn.Dropout(p=self.featdrop_rate, inplace=False)
-        #self.dropout = nn.Dropout(p=self.edgedrop_rate, inplace=False)
         
         self.criterion = nn.CrossEntropyLoss()
 
