@@ -36,10 +36,6 @@ class CRW(nn.Module):
             layers.append(nn.Linear(self.encoder_out_dim, 128))
         return nn.Sequential(*layers)
 
-    # def trans_energies(self, A):
-    #     A[torch.rand_like(A) < self.edgedrop] = -1e10 # edge dropout
-    #     return F.softmax(A / self.temperature, dim=-1) # shaping
-
     def forward(self, x):
         """
         x is (B, T, C*N, H, W)
