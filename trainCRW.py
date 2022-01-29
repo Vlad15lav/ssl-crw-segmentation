@@ -165,10 +165,4 @@ if __name__ == '__main__':
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
     
-    ###
-    for i, clip in enumerate(trainloader):
-        print(clip.shape)
-        break
-    ###
-    
     train(model, trainloader, optimizer, lr_schedule, opt)
