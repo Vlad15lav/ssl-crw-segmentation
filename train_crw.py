@@ -71,7 +71,7 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
         # training
         model.train()
         loss_batch, acc_batch = [], []
-        for i, clip in enumerate(tqdm(trainloader)):
+        for i, clip in enumerate(trainloader):
             adjust_learning_rate(optimizer, lr_schedule, epoch * len(trainloader) + i)
             optimizer.zero_grad()
 
@@ -91,7 +91,7 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
         model.eval()
         loss_batch, acc_batch = [], []
         with torch.no_grad():
-            for i, clip in enumerate(tqdm(validloader)):
+            for i, clip in enumerate(validloader):
                 clip = Variable(clip.to(opt.device))
                 q, loss, acc = model(clip)
                 
