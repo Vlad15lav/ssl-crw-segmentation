@@ -55,14 +55,15 @@ def get_args():
     return args
 
 
-def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
+def train(model, train_loader, valid_low_loader, valid_high_loader, optimizer, lr_schedule, opt):
     train_loss, train_acc = [], []
-    valid_loss, valid_acc = [], []
+    valid_low_loss, valid_low_acc = [], []
+    valid_high_loss, valid_high_acc = [], []
     
     if not os.path.exists(opt.weight_path):
         f_log = open(f'{opt.weight_path}/log_training.pickle', 'rb')
         obj = pickle.load(f_log)
-        train_loss, train_acc, valid_loss, valid_acc = obj
+        train_loss, train_acc, valid_low_loss, valid_low_acc, valid_high_loss, valid_high_acc = obj
         f_log.close()
     
     for epoch in tqdm(range(len(train_loss), opt.epoches)):
@@ -71,8 +72,8 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
         # training
         model.train()
         loss_batch, acc_batch = [], []
-        for i, clip in enumerate(trainloader):
-            adjust_learning_rate(optimizer, lr_schedule, epoch * len(trainloader) + i)
+        for i, clip in enumerate(train_loader):
+            adjust_learning_rate(optimizer, lr_schedule, epoch * len(train_loader) + i)
             optimizer.zero_grad()
 
             clip = Variable(clip.to(opt.device))
@@ -87,23 +88,37 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
         train_loss.append(np.mean(loss_batch))
         train_acc.append(np.mean(acc_batch))
         
-        # validation
+        # validation low
         model.eval()
         loss_batch, acc_batch = [], []
         with torch.no_grad():
-            for i, clip in enumerate(validloader):
+            for i, clip in enumerate(valid_low_loader):
                 clip = Variable(clip.to(opt.device))
                 q, loss, acc = model(clip)
                 
                 loss_batch.append(loss.item())
                 acc_batch.append(acc.cpu())
         
-        valid_loss.append(np.mean(loss_batch))
-        valid_acc.append(np.mean(acc_batch))
+        valid_low_loss.append(np.mean(loss_batch))
+        valid_low_acc.append(np.mean(acc_batch))
+        
+        # validation high
+        model.eval()
+        loss_batch, acc_batch = [], []
+        with torch.no_grad():
+            for i, clip in enumerate(valid_high_loader):
+                clip = Variable(clip.to(opt.device))
+                q, loss, acc = model(clip)
+                
+                loss_batch.append(loss.item())
+                acc_batch.append(acc.cpu())
+        
+        valid_high_loss.append(np.mean(loss_batch))
+        valid_high_acc.append(np.mean(acc_batch))
         
         # print status training
         print(f'(epoche {epoch + 1}): train loss: {train_loss[-1]}, train accuracy: {train_acc[-1]}', end=', ')
-        print(f'valid loss: {valid_loss[-1]}, valid accuracy: {valid_acc[-1]}')
+        print(f'(low) valid loss: {valid_low_loss[-1]}, valid accuracy: {valid_low_acc[-1]}, (high) valid loss: {valid_high_loss[-1]}, valid accuracy: {valid_high_acc[-1]}')
 
         # save last and best weights
         checkpoint = {
@@ -115,7 +130,7 @@ def train(model, trainloader, validloader, optimizer, lr_schedule, opt):
                 os.path.join(opt.weight_path, 'checkpoint.pth'))
  
         # log history
-        lists = (train_loss, train_acc, valid_loss, valid_acc)
+        lists = (train_loss, train_acc, valid_low_loss, valid_low_acc, valid_high_loss, valid_high_acc)
         f_log = open(f'{opt.weight_path}/log_training.pickle', 'wb')
         pickle.dump(lists, f_log)
         f_log.close()
@@ -150,7 +165,14 @@ if __name__ == '__main__':
                            extensions=('mp4'),
                            frame_rate=opt.frame_skip,
                            _precomputed_metadata=cached)
-    validset = Kinetics400(root=opt.data_path + '/valid',
+    validlowset = Kinetics400(root=opt.data_path + '/valid_low',
+                           frames_per_clip=opt.clip_len,
+                           step_between_clips=1,
+                           transform=transform_train,
+                           extensions=('mp4'),
+                           frame_rate=opt.frame_skip,
+                           _precomputed_metadata=cached)
+    validhighset = Kinetics400(root=opt.data_path + '/valid_high',
                            frames_per_clip=opt.clip_len,
                            step_between_clips=1,
                            transform=transform_train,
@@ -168,7 +190,9 @@ if __name__ == '__main__':
     train_sampler = RandomSampler(trainset)
     train_loader = DataLoader(trainset, batch_size=opt.bs, sampler=train_sampler,
                     num_workers=opt.n_work, pin_memory=True, collate_fn=collate_fn)
-    valid_loader = DataLoader(validset, batch_size=opt.bs,
+    valid_low_loader = DataLoader(validlowset, batch_size=opt.bs,
+                    num_workers=opt.n_work, pin_memory=True, collate_fn=collate_fn)
+    valid_high_loader = DataLoader(validhighset, batch_size=opt.bs,
                     num_workers=opt.n_work, pin_memory=True, collate_fn=collate_fn)
     
     # create crw model
@@ -190,4 +214,4 @@ if __name__ == '__main__':
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
     
-    train(model, train_loader, valid_loader, optimizer, lr_schedule, opt)
+    train(model, train_loader, valid_low_loader, valid_high_loader, optimizer, lr_schedule, opt)
