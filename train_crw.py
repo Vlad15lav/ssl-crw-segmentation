@@ -42,10 +42,10 @@ def get_args():
     parser.add_argument('--bs', type=int, default=8, help='batch size')
     parser.add_argument('--epoches', type=int, default=25, help='number of epoches')
     
-    parser.add_argument('--lr', type=float, default=0.005, help='init learning rate')
+    parser.add_argument('--lr', type=float, default=0.0001, help='init learning rate')
     parser.add_argument('--final-lr', type=float, default=0.00005, help='init learning rate')
     parser.add_argument('--wup-lr', type=float, default=0.000001, help='start learning rate warm-up')
-    parser.add_argument('--warm-up', type=int, default=3, help='number of epoche with warm-up')
+    parser.add_argument('--warm-up', type=int, default=1, help='number of epoche with warm-up')
     parser.add_argument('--wd', '--weight-decay', type=float, default=0.0005, help='weight decay')
     parser.add_argument('--adam', help='adam optimizer', action="store_true")
     parser.add_argument('--n_work', type=int, default=2, help='number of gpu')
