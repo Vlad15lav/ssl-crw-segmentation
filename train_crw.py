@@ -172,14 +172,14 @@ if __name__ == '__main__':
                            transform=transform_train,
                            extensions=('mp4'),
                            frame_rate=opt.frame_skip,
-                           _precomputed_metadata=cached)
+                           _precomputed_metadata=None)
     validhighset = Kinetics400(root=opt.data_path + '/valid_high',
                            frames_per_clip=opt.clip_len,
                            step_between_clips=1,
                            transform=transform_train,
                            extensions=('mp4'),
                            frame_rate=opt.frame_skip,
-                           _precomputed_metadata=cached)
+                           _precomputed_metadata=None)
     
     # save cache dataset
     if cached is None and cache_path:
