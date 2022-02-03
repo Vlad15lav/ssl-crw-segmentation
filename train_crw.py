@@ -65,6 +65,7 @@ def train(model, train_loader, valid_low_loader, valid_high_loader, optimizer, l
         obj = pickle.load(f_log)
         train_loss, train_acc, valid_low_loss, valid_low_acc, valid_high_loss, valid_high_acc = obj
         f_log.close()
+        print('training data loaded!')
     
     for epoch in range(len(train_loss), opt.epoches):
         display.clear_output(wait=True)
@@ -213,5 +214,6 @@ if __name__ == '__main__':
         checkpoint = torch.load(f'{opt.weight_path}/checkpoint.pth')
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
+        print('weights loaded!')
     
     train(model, train_loader, valid_low_loader, valid_high_loader, optimizer, lr_schedule, opt)
