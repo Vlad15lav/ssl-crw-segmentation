@@ -66,7 +66,7 @@ def train(model, train_loader, valid_low_loader, valid_high_loader, optimizer, l
         train_loss, train_acc, valid_low_loss, valid_low_acc, valid_high_loss, valid_high_acc = obj
         f_log.close()
     
-    for epoch in tqdm(range(len(train_loss), opt.epoches)):
+    for epoch in range(len(train_loss), opt.epoches):
         display.clear_output(wait=True)
         
         # training
