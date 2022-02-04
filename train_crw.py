@@ -40,7 +40,7 @@ def get_args():
     parser.add_argument('--mean-norm', nargs='+', type=int, default=[0.4914, 0.4822, 0.4465], help='mean pixel')
     parser.add_argument('--std-norm', nargs='+', type=int, default=[0.2023, 0.1994, 0.2010], help='std pixel')
     parser.add_argument('--bs', type=int, default=8, help='batch size')
-    parser.add_argument('--epoches', type=int, default=25, help='number of epoches')
+    parser.add_argument('--epoches', type=int, default=30, help='number of epoches')
     
     parser.add_argument('--lr', type=float, default=0.0001, help='init learning rate')
     parser.add_argument('--final-lr', type=float, default=0.00005, help='init learning rate')
