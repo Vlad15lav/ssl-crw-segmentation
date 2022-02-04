@@ -207,7 +207,7 @@ if __name__ == '__main__':
             weight_decay=opt.wd)
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr,
-            momentum=cfg.momentum, weight_decay=opt.wd)
+            momentum=opt.momentum, weight_decay=opt.wd)
     
     # load checkpoing weights
     if os.path.exists(opt.weight_path) and opt.cont_train:
