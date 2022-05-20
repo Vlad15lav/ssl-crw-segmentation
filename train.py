@@ -59,7 +59,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
     train_loss, train_acc = [], []
     valid_loss, valid_acc = [], []
     
-    if os.path.exists(opt.weight_path):
+    if os.path.exists(f'{opt.weight_path}/log_training.pickle'):
         f_log = open(f'{opt.weight_path}/log_training.pickle', 'rb')
         obj = pickle.load(f_log)
         train_loss, train_acc, valid_loss, valid_acc, valid_loss, valid_acc = obj
