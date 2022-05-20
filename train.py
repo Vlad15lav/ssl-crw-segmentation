@@ -84,6 +84,9 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
 
             loss_batch.append(loss.item())
             acc_batch.append(acc.cpu())
+            
+            if (i + 1) % int(len(train_loader) * 0.05) == 0:
+                print(f"\tProgress training of epoche - {(i + 1) / len(train_loader)})
         
         train_loss.append(np.mean(loss_batch))
         train_acc.append(np.mean(acc_batch))
