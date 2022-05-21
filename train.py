@@ -58,6 +58,15 @@ def get_args():
 def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
     train_loss, train_acc = [], []
     valid_loss, valid_acc = [], []
+    skip_iteration = 0
+    
+    # load checkpoing weights
+    if os.path.exists(opt.weight_path) and opt.cont_train:
+        checkpoint = torch.load(f'{opt.weight_path}/checkpoint.pth')
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        skip_iteration = checkpoint['iter']
+        print('weights loaded!')
     
     if os.path.exists(f'{opt.weight_path}/log_training.pickle'):
         f_log = open(f'{opt.weight_path}/log_training.pickle', 'rb')
@@ -74,6 +83,10 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
         model.train()
         loss_batch, acc_batch = [], []
         for i, clip in enumerate(train_loader):
+            if skip_iteration > 0:
+                skip_iteration -= 1
+                continue
+            
             adjust_learning_rate(optimizer, lr_schedule, epoch * len(train_loader) + i)
             optimizer.zero_grad()
 
@@ -89,6 +102,15 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
             if (i + 1) % int(len(train_loader) * 0.025) == 0:
                 print(f"\tProgress training of epoche - {(i + 1) / len(train_loader)}", end=' | ')
                 print(f"train loss - {np.mean(loss_batch)}, train acc - {np.mean(acc_batch)}")
+                # save last and best weights
+                checkpoint = {
+                        'model': model.state_dict(),
+                        'optimizer': optimizer.state_dict(),
+                        'epoch': epoch,
+                        'iter': i}
+                torch.save(
+                        checkpoint,
+                        os.path.join(opt.weight_path, 'checkpoint.pth'))
         
         train_loss.append(np.mean(loss_batch))
         train_acc.append(np.mean(acc_batch))
@@ -110,12 +132,24 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
         # print status training
         print(f'(epoche {epoch + 1}): train loss: {train_loss[-1]}, train accuracy: {train_acc[-1]}', end=', ')
         print(f'valid loss: {valid_loss[-1]}, valid accuracy: {valid_acc[-1]}')
+        
+        if len(valid_loss) > 1 and valid_loss[-1] < np.min(valid_loss[:-1]):
+            # save last and best weights
+            checkpoint = {
+                    'model': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'epoch': epoch,
+                    'iter': -1}
+            torch.save(
+                    checkpoint,
+                    os.path.join(opt.weight_path, 'best_checkpoint.pth'))
 
         # save last and best weights
         checkpoint = {
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'epoch': epoch}
+                'epoch': epoch,
+                'iter': 0}
         torch.save(
                 checkpoint,
                 os.path.join(opt.weight_path, 'checkpoint.pth'))
@@ -189,12 +223,5 @@ if __name__ == '__main__':
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr,
             momentum=opt.momentum, weight_decay=opt.wd)
-    
-    # load checkpoing weights
-    if os.path.exists(opt.weight_path) and opt.cont_train:
-        checkpoint = torch.load(f'{opt.weight_path}/checkpoint.pth')
-        model.load_state_dict(checkpoint['model'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
-        print('weights loaded!')
     
     train(model, train_loader, valid_loader, optimizer, lr_schedule, opt)
