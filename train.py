@@ -49,6 +49,7 @@ def get_args():
     parser.add_argument('--wd', '--weight-decay', type=float, default=0.0005, help='weight decay')
     parser.add_argument('--adam', help='adam optimizer', action="store_true")
     parser.add_argument('--n_work', type=int, default=2, help='number of gpu')
+    parser.add_argument('--seed', type=int, default=841, help='number of seed')
     parser.add_argument('--device', type=str, default='cuda', help='use cpu or cuda')
 
     args = parser.parse_args()
@@ -58,14 +59,12 @@ def get_args():
 def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
     train_loss, train_acc = [], []
     valid_loss, valid_acc = [], []
-    skip_iteration = 0
     
     # load checkpoing weights
     if os.path.exists(opt.weight_path) and opt.cont_train:
         checkpoint = torch.load(f'{opt.weight_path}/checkpoint.pth')
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
-        skip_iteration = checkpoint['iter']
         print('weights loaded!')
     
     if os.path.exists(f'{opt.weight_path}/log_training.pickle'):
@@ -83,9 +82,6 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
         model.train()
         loss_batch, acc_batch = [], []
         for i, clip in enumerate(train_loader):
-            if skip_iteration > 0:
-                skip_iteration -= 1
-                continue
             
             adjust_learning_rate(optimizer, lr_schedule, epoch * len(train_loader) + i)
             optimizer.zero_grad()
@@ -107,7 +103,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
                         'model': model.state_dict(),
                         'optimizer': optimizer.state_dict(),
                         'epoch': epoch,
-                        'iter': i}
+                        'state_sampler': train_loader.sampler}
                 torch.save(
                         checkpoint,
                         os.path.join(opt.weight_path, 'checkpoint.pth'))
@@ -139,7 +135,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
                     'model': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
                     'epoch': epoch,
-                    'iter': -1}
+                    'state_sampler': train_loader.sampler}
             torch.save(
                     checkpoint,
                     os.path.join(opt.weight_path, 'best_checkpoint.pth'))
@@ -149,7 +145,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'epoch': epoch,
-                'iter': 0}
+                'state_sampler': train_loader.sampler}
         torch.save(
                 checkpoint,
                 os.path.join(opt.weight_path, 'checkpoint.pth'))
@@ -162,6 +158,9 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
 
 if __name__ == '__main__':
     opt = get_args()
+    
+    np.random.seed(opt.seed)
+    torch.manual_seed(opt.seed)
 
     if not os.path.exists(opt.weight_path):
         os.makedirs(opt.weight_path)
@@ -206,6 +205,9 @@ if __name__ == '__main__':
     
     # create dataloader
     train_sampler = RandomSampler(trainset)
+    if os.path.exists(opt.weight_path) and opt.cont_train:
+        train_sampler = checkpoint['state_sampler']
+    
     train_loader = DataLoader(trainset, batch_size=opt.bs, sampler=train_sampler,
                     num_workers=opt.n_work, pin_memory=True, collate_fn=collate_fn)
     valid_loader = DataLoader(validset, batch_size=opt.bs,
