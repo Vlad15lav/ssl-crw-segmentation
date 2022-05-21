@@ -21,6 +21,7 @@ def get_args():
     parser = argparse.ArgumentParser('Training CRW')
     parser.add_argument('--data-path', type=str, help='path dataset')
     parser.add_argument('--weight-path', type=str, default='state/crw', help='path for logs, weights training')
+    parser.add_argument('--name-checkpoint', type=str, default='checkpoint', help='name checkpoint file pth')
     parser.add_argument('--cache-path', type=str, help='cache file dataset')
 
     parser.add_argument('--depth', type=int, default=18, help='depth resnet model')
@@ -62,7 +63,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
     
     # load checkpoing weights
     if os.path.exists(opt.weight_path) and opt.cont_train:
-        checkpoint = torch.load(f'{opt.weight_path}/checkpoint.pth')
+        checkpoint = torch.load(f'{opt.weight_path}/{opt.checkpoint}.pth')
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         print('weights loaded!')
@@ -106,7 +107,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
                         'state_sampler': train_loader.sampler}
                 torch.save(
                         checkpoint,
-                        os.path.join(opt.weight_path, 'checkpoint.pth'))
+                        os.path.join(opt.weight_path, 'iter_checkpoint.pth'))
         
         train_loss.append(np.mean(loss_batch))
         train_acc.append(np.mean(acc_batch))
@@ -206,6 +207,7 @@ if __name__ == '__main__':
     # create dataloader
     train_sampler = RandomSampler(trainset)
     if os.path.exists(opt.weight_path) and opt.cont_train:
+        checkpoint = torch.load(f'{opt.weight_path}/{opt.checkpoint}.pth')
         train_sampler = checkpoint['state_sampler']
     
     train_loader = DataLoader(trainset, batch_size=opt.bs, sampler=train_sampler,
