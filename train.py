@@ -63,7 +63,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
     
     # load checkpoing weights
     if os.path.exists(opt.weight_path) and opt.cont_train:
-        checkpoint = torch.load(f'{opt.weight_path}/{opt.checkpoint}.pth')
+        checkpoint = torch.load(f'{opt.weight_path}/{opt.name_checkpoint}.pth')
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         print('weights loaded!')
@@ -76,6 +76,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
         print('training data loaded!')
 
     print("Training start...")
+    train_size = len(train_loader)
     for epoch in range(len(train_loss), opt.epoches):
         display.clear_output(wait=True)
         
@@ -84,7 +85,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
         loss_batch, acc_batch = [], []
         for i, clip in enumerate(train_loader):
             
-            adjust_learning_rate(optimizer, lr_schedule, epoch * len(train_loader) + i)
+            adjust_learning_rate(optimizer, lr_schedule, epoch * train_size + i)
             optimizer.zero_grad()
 
             clip = Variable(clip.to(opt.device))
@@ -96,8 +97,8 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
             loss_batch.append(loss.item())
             acc_batch.append(acc.cpu())
             
-            if (i + 1) % int(len(train_loader) * 0.025) == 0:
-                print(f"\tProgress training of epoche - {(i + 1) / len(train_loader)}", end=' | ')
+            if (i + 1) % int(train_size * 0.025) == 0:
+                print(f"\tProgress training of epoche - {(i + 1) * 100 // train_size)}%", end=' | ')
                 print(f"train loss - {np.mean(loss_batch)}, train acc - {np.mean(acc_batch)}")
                 # save last and best weights
                 checkpoint = {
@@ -105,9 +106,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
                         'optimizer': optimizer.state_dict(),
                         'epoch': epoch,
                         'state_sampler': train_loader.sampler}
-                torch.save(
-                        checkpoint,
-                        os.path.join(opt.weight_path, 'iter_checkpoint.pth'))
+                torch.save(checkpoint, os.path.join(opt.weight_path, 'iter_checkpoint.pth'))
         
         train_loss.append(np.mean(loss_batch))
         train_acc.append(np.mean(acc_batch))
@@ -207,7 +206,7 @@ if __name__ == '__main__':
     # create dataloader
     train_sampler = RandomSampler(trainset)
     if os.path.exists(opt.weight_path) and opt.cont_train:
-        checkpoint = torch.load(f'{opt.weight_path}/{opt.checkpoint}.pth')
+        checkpoint = torch.load(f'{opt.weight_path}/{opt.name_checkpoint}.pth')
         train_sampler = checkpoint['state_sampler']
     
     train_loader = DataLoader(trainset, batch_size=opt.bs, sampler=train_sampler,
