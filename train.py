@@ -104,8 +104,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
                 checkpoint = {
                         'model': model.state_dict(),
                         'optimizer': optimizer.state_dict(),
-                        'epoch': epoch,
-                        'state_sampler': train_loader.sampler}
+                        'epoch': epoch}
                 torch.save(checkpoint, os.path.join(opt.weight_path, 'iter_checkpoint.pth'))
         
         train_loss.append(np.mean(loss_batch))
@@ -134,8 +133,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
             checkpoint = {
                     'model': model.state_dict(),
                     'optimizer': optimizer.state_dict(),
-                    'epoch': epoch,
-                    'state_sampler': train_loader.sampler}
+                    'epoch': epoch}
             torch.save(
                     checkpoint,
                     os.path.join(opt.weight_path, 'best_checkpoint.pth'))
@@ -144,8 +142,7 @@ def train(model, train_loader, valid_loader, optimizer, lr_schedule, opt):
         checkpoint = {
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'epoch': epoch,
-                'state_sampler': train_loader.sampler}
+                'epoch': epoch}
         torch.save(
                 checkpoint,
                 os.path.join(opt.weight_path, 'checkpoint.pth'))
